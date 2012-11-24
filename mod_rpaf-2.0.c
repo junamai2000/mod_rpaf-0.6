@@ -59,7 +59,7 @@
  * rpaf is short for reverse proxy add forward 
  *
  * This module does the opposite of mod_proxy_add_forward written by
- * Ask Bjørn Hansen. http://develooper.com/code/mpaf/ or mod_proxy
+ * Ask Bj?rn Hansen. http://develooper.com/code/mpaf/ or mod_proxy
  * in 1.3.25 and above and mod_proxy from Apache 2.0
  * 
  */ 
@@ -190,6 +190,7 @@ static int change_remote_ip(request_rec *r) {
             r->connection->remote_ip = apr_pstrdup(r->connection->pool, ((char **)arr->elts)[((arr->nelts)-1)]);
             r->connection->remote_addr->sa.sin.sin_addr.s_addr = apr_inet_addr(r->connection->remote_ip);
             r->connection->remote_addr->sa.sin.sin_family = AF_INET;
+            r->connection->remote_addr->family = AF_INET;
             if (cfg->sethostname) {
                 const char *hostvalue;
                 if ((hostvalue = apr_table_get(r->headers_in, "X-Forwarded-Host"))) {
