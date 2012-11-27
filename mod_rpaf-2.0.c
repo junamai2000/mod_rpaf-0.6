@@ -188,9 +188,33 @@ static int change_remote_ip(request_rec *r) {
             rcr->r = r;
             apr_pool_cleanup_register(r->pool, (void *)rcr, rpaf_cleanup, apr_pool_cleanup_null);
             r->connection->remote_ip = apr_pstrdup(r->connection->pool, ((char **)arr->elts)[((arr->nelts)-1)]);
-            r->connection->remote_addr->sa.sin.sin_addr.s_addr = apr_inet_addr(r->connection->remote_ip);
-            r->connection->remote_addr->sa.sin.sin_family = AF_INET;
-            r->connection->remote_addr->family = AF_INET;
+
+            //r->connection->remote_addr->sa.sin.sin_addr.s_addr = apr_inet_addr(r->connection->remote_ip);
+            //r->connection->remote_addr->sa.sin.sin_family = AF_INET;
+            //r->connection->remote_addr->family = AF_INET;
+
+			if (r->connection->remote_addr->sa.sin.sin_family == AF_INET) {
+				r->connection->remote_addr->sa.sin.sin_addr.s_addr =
+					apr_inet_addr(r->connection->remote_ip);
+			}
+			else if (IN6_IS_ADDR_V4MAPPED((struct in6_addr
+							*)r->connection->remote_addr->ipaddr_ptr)) {
+				((apr_uint32_t *)r->connection->remote_addr->ipaddr_ptr)[0] = 0;
+				((apr_uint32_t *)r->connection->remote_addr->ipaddr_ptr)[1] = 0;
+				((apr_uint32_t *)r->connection->remote_addr->ipaddr_ptr)[2] =
+					htonl (0xffff);
+				((apr_uint32_t *)r->connection->remote_addr->ipaddr_ptr)[3] =
+					inet_addr( r->connection->remote_ip );
+			}
+			else if (r->connection->remote_addr->sa.sin.sin_family == AF_INET6) {
+				inet_pton(AF_INET6, r->connection->remote_ip, ((struct
+								sockaddr_in6*)&r->connection->remote_addr)->sin6_addr.s6_addr);
+			}
+			else {
+				ap_log_rerror(APLOG_MARK, APLOG_DEBUG|APLOG_NOERRNO, 0, r,
+						"Apache doesn't support this address family");
+			}
+							
             if (cfg->sethostname) {
                 const char *hostvalue;
                 if ((hostvalue = apr_table_get(r->headers_in, "X-Forwarded-Host"))) {
