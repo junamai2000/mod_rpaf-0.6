@@ -206,8 +206,8 @@ static int change_remote_ip(request_rec *r) {
                     (struct sockaddr_in6*)&r->connection->remote_addr)->sin6_addr.s6_addr);
             }
             else {
-                $p_log_rerror(APLOG_MARK, APLOG_DEBUG|APLOG_NOERRNO, 0, r,
-                "Apache doesn't support this address family");
+                ap_log_rerror(APLOG_MARK, APLOG_DEBUG|APLOG_NOERRNO, 0, r,
+                    "Apache doesn't support this address family");
             }
 
             if (cfg->sethostname) {
